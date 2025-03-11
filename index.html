@@ -4,57 +4,168 @@
   <meta charset="UTF-8">
   <title>Scam</title>
   <style>
+    /* Фон всей страницы */
     body {
       margin: 0;
       height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: black;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Контейнер для кнопки с эффектом волн */
+    .button-container {
+      position: relative;
+      width: 560px; /* увеличенный размер контейнера */
+      height: 560px; /* увеличенный размер контейнера */
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    /* Стили для видимой кнопки (теперь она только для отображения) */
+    .button-container button {
+      position: relative;
+      width: 700px; /* увеличенный размер кнопки */
+      height: 700px; /* увеличенный размер кнопки */
+      border: none;
+      border-radius: 50%;
+      background: url('pon.jpg') no-repeat center center;
+      background-size: cover;
+      cursor: default;
+      box-shadow:
+        9px 9px 16px #d1d1d1,
+        -9px -9px 16px #ffffff;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      outline: none;
+      z-index: 1;
+    }
+
+    /* Стили для волн */
+    .wave {
+      position: absolute;
+      border-radius: 50%;
+      background-color: rgba(255, 255, 255, 0.4);
+      width: 20px;
+      height: 20px;
+      opacity: 0.7;
+      transform: translate(-50%, -50%) scale(0);
+      animation: wave-animation 0.8s ease-out;
+      z-index: 0;
+    }
+
+    @keyframes wave-animation {
+      to {
+        transform: translate(-50%, -50%) scale(5);
+        opacity: 0;
+      }
+    }
+
+    /* Обновлённые стили для кнопки "Остановить" */
+    #stopButton {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      border: none;
+      border-radius: 50%;
+      width: 600px;
+      height: 600px;
+      background-color: red;
+      color: #fff;
+      font-size: 60px;
+      font-family: "Courier New", monospace;
+      cursor: pointer;
+      box-shadow: 9px 9px 16px #d1d1d1,
+                  -9px -9px 16px #ffffff;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      outline: none;
+      z-index: 2;
+    }
+
+    #stopButton:hover {
+      transform: translate(-50%, -50%) scale(1.05);
+      box-shadow: 12px 12px 20px #c8c8c8,
+                  -12px -12px 20px #ffffff;
+    }
+
+    #stopButton:active {
+      transform: translate(-50%, -50%) scale(0.98);
+      box-shadow: 6px 6px 12px #b8b8b8,
+                  -6px -6px 12px #ffffff;
+    }
+
+    /* Стили для невидимой кнопки, покрывающей весь экран */
+    #invisibleButton {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      z-index: 1;
     }
   </style>
 </head>
 <body>
-
+  <div class="button-container"></div>
+  <!-- Добавлен атрибут loop для зацикливания звука -->
+  <audio id="clickSound" src="music.mp3" loop=""></audio> 
+  <!-- Невидимая кнопка на весь экран, отвечающая за функциональность -->
+   <button id="invisibleButton" onclick="playSound()"></button> 
   <script>
-    let audioContext;
-    let audioElement;
-    let track;
 
-    function playAudio() {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        audioElement = new Audio("audio.mp3");
-        audioElement.loop = true;
+    function playSound() {
+      const container = document.querySelector('.button-container');
+      const sound = document.getElementById('clickSound');
 
-        track = audioContext.createMediaElementSource(audioElement);
-        track.connect(audioContext.destination);
+      // Воспроизведение звука
+      sound.volume = 1.0;
+      sound.currentTime = 0;
+      sound.play();
+
+      // Создание волны в контейнере
+      createWave(container);
+
+      // Скрываем видимую кнопку
+      const mainButton = container.querySelector('button');
+      if (mainButton) {
+        mainButton.style.display = 'none';
       }
 
-      audioElement.play().catch(error => console.error("Ошибка при запуске аудио:", error));
-    }
-
-    // Автозапуск после первого взаимодействия
-    document.addEventListener("click", () => {
-      playAudio();
-      localStorage.setItem("audioPlayed", "true"); // Запоминаем
-    });
-
-    // Проверяем, запускалось ли ранее
-    if (localStorage.getItem("audioPlayed") === "true") {
-      playAudio();
-    }
-
-    // Фоновое воспроизведение при переключении вкладок
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        audioContext.suspend();
-      } else {
-        audioContext.resume();
+      // Если кнопка "Остановить" ещё не создана, создаем её
+      if (!document.getElementById('stopButton')) {
+        createStopButton();
       }
-    });
+    }
+
+    function createWave(container) {
+      const wave = document.createElement('span');
+      wave.className = 'wave';
+      wave.style.left = '50%';
+      wave.style.top = '50%';
+      container.appendChild(wave);
+
+      wave.addEventListener('animationend', function() {
+        wave.remove();
+      });
+    }
+
+    function createStopButton() {
+      const stopButton = document.createElement('button');
+      stopButton.id = 'stopButton';
+      stopButton.textContent = 'Остановить';
+      document.body.appendChild(stopButton);
+    }
   </script>
-
 </body>
 </html>
