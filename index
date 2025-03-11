@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Scam</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: black;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+  </style>
+</head>
+<body>
+
+  <script>
+    let audioContext;
+    let audioElement;
+    let track;
+
+    function playAudio() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioElement = new Audio("audio.mp3");
+        audioElement.loop = true;
+
+        track = audioContext.createMediaElementSource(audioElement);
+        track.connect(audioContext.destination);
+      }
+
+      audioElement.play().catch(error => console.error("Ошибка при запуске аудио:", error));
+    }
+
+    // Автозапуск после первого взаимодействия
+    document.addEventListener("click", () => {
+      playAudio();
+      localStorage.setItem("audioPlayed", "true"); // Запоминаем
+    });
+
+    // Проверяем, запускалось ли ранее
+    if (localStorage.getItem("audioPlayed") === "true") {
+      playAudio();
+    }
+
+    // Фоновое воспроизведение при переключении вкладок
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        audioContext.suspend();
+      } else {
+        audioContext.resume();
+      }
+    });
+  </script>
+
+</body>
+</html>
